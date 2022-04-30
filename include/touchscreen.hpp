@@ -22,7 +22,7 @@
 class cTouchScreen
 {
     public:
-    cTouchScreen(bool verbose = true);
+  cTouchScreen(const char* path="/dev/input/event7", bool verbose = true);
     ~cTouchScreen();
 
     static void *
@@ -62,6 +62,11 @@ class cTouchScreen
         return m_abs_param[ABS_MT_SLOT][ABS_PARAM_MAX] + 1;
     };
 
+  bool is_absolute()
+  {
+    return !m_INPUT_PROP_POINTER;
+  };
+
     private:
     std::thread *m_thread;
     bool m_active;
@@ -72,7 +77,11 @@ class cTouchScreen
     uint16_t m_id[4];
     int8_t m_name[256] = "Unknown";
     unsigned long m_bit[EV_MAX][NBITS(KEY_MAX)];
+    unsigned long m_propbits[INPUT_PROP_MAX];
     int32_t m_abs_param[KEY_MAX][6];
+
+    bool m_INPUT_PROP_POINTER;
+    bool m_INPUT_PROP_BUTTONPAD;
 
     int32_t **m_mt_pos;
     int32_t m_abs_pos[3];

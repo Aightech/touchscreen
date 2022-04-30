@@ -1,11 +1,11 @@
-#include "touchscreen.hpp"
+ #include "touchscreen.hpp"
 #include <string.h>
 
 #define LOG(...)  \
     if(m_verbose) \
     printf(__VA_ARGS__)
 
-cTouchScreen::cTouchScreen(bool verbose) : m_verbose(verbose)
+cTouchScreen::cTouchScreen(const char* path,bool verbose) : m_verbose(verbose)
 {
     m_active = false;
     m_fd = 0;
@@ -14,7 +14,7 @@ cTouchScreen::cTouchScreen(bool verbose) : m_verbose(verbose)
     else
     {
         /* Open Device */
-        m_fd = open(EVENT_DEVICE, O_RDONLY);
+        m_fd = open(path, O_RDONLY);
         if(m_fd == -1)
             fprintf(stderr, "%s is not a vaild device\n", EVENT_DEVICE);
         else
@@ -22,21 +22,20 @@ cTouchScreen::cTouchScreen(bool verbose) : m_verbose(verbose)
             if(ioctl(m_fd, EVIOCGVERSION, &m_version))
                 printf("evtest: can't get version");
 
-            LOG("Input driver version is %d.%d.%d\n", (m_version >> 16),
-                ((m_version >> 8) & 0xff), (m_version & 0xff));
-
+	    ioctl(m_fd, EVIOCGNAME(sizeof(m_name)), m_name);
+            LOG("Name: \t%s\n", m_name);
+            LOG("File: \t%s\n", path);
+	    
             ioctl(m_fd, EVIOCGID, m_id);
-            LOG("Input device ID: bus 0x%x vendor 0x%x product 0x%x version "
-                "0x%x\n",
+            LOG("ID: \t0x%x(bus)  0x%x(vendor) 0x%x(product) 0x%x(version)\n",
                 m_id[ID_BUS], m_id[ID_VENDOR], m_id[ID_PRODUCT],
                 m_id[ID_VERSION]);
 
-            ioctl(m_fd, EVIOCGNAME(sizeof(m_name)), m_name);
-            LOG("Input device name: \"%s\"\n", m_name);
+            LOG("Version:%d.%d.%d\n", (m_version >> 16),
+                ((m_version >> 8) & 0xff), (m_version & 0xff));
 
             memset(m_bit, 0, sizeof(m_bit));
             ioctl(m_fd, EVIOCGBIT(0, EV_MAX), m_bit[0]);
-            LOG("Supported events:\n");
 
             ioctl(m_fd, EVIOCGBIT(EV_ABS, KEY_MAX), m_bit[EV_ABS]);
             for(uint code = 0; code < KEY_MAX; code++)
@@ -46,8 +45,13 @@ cTouchScreen::cTouchScreen(bool verbose) : m_verbose(verbose)
             for(int i = 0; i < m_abs_param[ABS_MT_SLOT][ABS_PARAM_MAX] + 1; i++)
                 m_mt_pos[i] = new int32_t[3]{-1, -1};
 
-            LOG("device file = %s\n", EVENT_DEVICE);
-            LOG("device name = %s\n", m_name);
+            memset(m_propbits, 0, sizeof(m_propbits));
+            ioctl(m_fd, EVIOCGPROP(sizeof(m_propbits)), m_propbits);
+
+            m_INPUT_PROP_POINTER = (m_propbits[0] >> INPUT_PROP_POINTER) & 1;
+            m_INPUT_PROP_BUTTONPAD =
+                (m_propbits[0] >> INPUT_PROP_BUTTONPAD) & 1;
+
             m_active = true;
 
             FD_ZERO(&m_rdfs);
