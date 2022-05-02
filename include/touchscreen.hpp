@@ -19,10 +19,12 @@
 #define ABS_PARAM_FLAT 4
 #define ABS_PARAM_RESOLUTION 5
 
+//to disable the touchscreen as a mouse : xinput set-prop id "Device Enabled" 0
+
 class cTouchScreen
 {
     public:
-  cTouchScreen(const char* path="/dev/input/event7", bool verbose = true);
+    cTouchScreen(const char *path = "/dev/input/event7", bool verbose = true);
     ~cTouchScreen();
 
     static void *
@@ -62,10 +64,17 @@ class cTouchScreen
         return m_abs_param[ABS_MT_SLOT][ABS_PARAM_MAX] + 1;
     };
 
-  bool is_absolute()
-  {
-    return !m_INPUT_PROP_POINTER;
-  };
+    bool
+    is_absolute()
+    {
+        return !m_INPUT_PROP_POINTER;
+    };
+
+    bool
+    has_pressure()
+    {
+        return m_has_pressure;
+    };
 
     private:
     std::thread *m_thread;
@@ -82,6 +91,8 @@ class cTouchScreen
 
     bool m_INPUT_PROP_POINTER;
     bool m_INPUT_PROP_BUTTONPAD;
+
+    bool m_has_pressure;
 
     int32_t **m_mt_pos;
     int32_t m_abs_pos[3];

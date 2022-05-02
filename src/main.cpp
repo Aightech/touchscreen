@@ -5,7 +5,8 @@
 int
 main(int argc, char *argv[])
 {
-    cTouchScreen ts;
+  std::string path = (argc>1)?argv[1]:"/dev/input/event7";
+  cTouchScreen ts(path.c_str());
     int nb_mt = ts.max_mt();
     std::string clear_string = "\xd" + std::string(nb_mt * 15, ' ') + "\xd";
 

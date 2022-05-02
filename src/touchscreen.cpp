@@ -36,14 +36,17 @@ cTouchScreen::cTouchScreen(const char* path,bool verbose) : m_verbose(verbose)
 
             memset(m_bit, 0, sizeof(m_bit));
             ioctl(m_fd, EVIOCGBIT(0, EV_MAX), m_bit[0]);
+	    
 
             ioctl(m_fd, EVIOCGBIT(EV_ABS, KEY_MAX), m_bit[EV_ABS]);
             for(uint code = 0; code < KEY_MAX; code++)
                 ioctl(m_fd, EVIOCGABS(code), m_abs_param[code]);
 
+	    
+
             m_mt_pos = new int32_t *[m_abs_param[ABS_MT_SLOT][ABS_PARAM_MAX]];
             for(int i = 0; i < m_abs_param[ABS_MT_SLOT][ABS_PARAM_MAX] + 1; i++)
-                m_mt_pos[i] = new int32_t[3]{-1, -1};
+	      m_mt_pos[i] = new int32_t[3]{-1, -1, -1};
 
             memset(m_propbits, 0, sizeof(m_propbits));
             ioctl(m_fd, EVIOCGPROP(sizeof(m_propbits)), m_propbits);
@@ -51,6 +54,9 @@ cTouchScreen::cTouchScreen(const char* path,bool verbose) : m_verbose(verbose)
             m_INPUT_PROP_POINTER = (m_propbits[0] >> INPUT_PROP_POINTER) & 1;
             m_INPUT_PROP_BUTTONPAD =
                 (m_propbits[0] >> INPUT_PROP_BUTTONPAD) & 1;
+
+	    m_has_pressure = ((m_bit[EV_ABS][0] >> ABS_PRESSURE) & 1);
+
 
             m_active = true;
 
@@ -114,7 +120,9 @@ cTouchScreen::readEv()
             case ABS_MT_POSITION_Y:
                 m_mt_pos[m_abs_param[ABS_MT_SLOT][ABS_PARAM_VALUE]]
                         [m_ev.code - ABS_MT_POSITION_X] = m_ev.value;
-
+		if(!m_has_pressure)
+		  m_mt_pos[m_abs_param[ABS_MT_SLOT][ABS_PARAM_VALUE]]
+                        [2] = 1;
                 break;
             case ABS_MT_PRESSURE:
                 m_mt_pos[m_abs_param[ABS_MT_SLOT][ABS_PARAM_VALUE]][2] =
