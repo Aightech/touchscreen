@@ -36,32 +36,23 @@ class cTouchScreen
     const int32_t *
     pos(uint32_t id = 0) const
     {
-        id = (id < m_abs_param[ABS_MT_SLOT][ABS_PARAM_MAX] + 1)
-                 ? id
-                 : m_abs_param[ABS_MT_SLOT][ABS_PARAM_MAX] + 1;
-        return m_mt_pos[id];
+        if(id < m_mt_nb_slot)
+            return m_mt_pos[id];
+        return nullptr;
     };
 
-    const int32_t
-    max_pos_x() const
+    const double *
+    pos_rel(uint32_t id = 0) const
     {
-        return m_abs_param[ABS_X][ABS_PARAM_MAX];
-    };
-    const int32_t
-    max_pos_y() const
-    {
-        return m_abs_param[ABS_Y][ABS_PARAM_MAX];
-    };
-    const int32_t
-    max_pos_p() const
-    {
-        return m_abs_param[ABS_PRESSURE][ABS_PARAM_MAX];
+        if(id < m_mt_nb_slot)
+            return m_mt_pos_rel[id];
+        return nullptr;
     };
 
     int32_t
     max_mt() const
     {
-        return m_abs_param[ABS_MT_SLOT][ABS_PARAM_MAX] + 1;
+        return m_mt_nb_slot;
     };
 
     bool
@@ -76,9 +67,10 @@ class cTouchScreen
         return m_has_pressure;
     };
 
+    bool m_active;
+
     private:
     std::thread *m_thread;
-    bool m_active;
     int m_fd;
     fd_set m_rdfs;
     struct input_event m_ev;
@@ -94,9 +86,18 @@ class cTouchScreen
 
     bool m_has_pressure;
 
-    int32_t **m_mt_pos;
+    int32_t m_mt_nb_slot = 0;
+    int32_t **m_mt_pos = nullptr;
+    double **m_mt_pos_rel = nullptr;
+    int32_t *m_mt_pressure = nullptr;
+    double *m_mt_pressure_rel = nullptr;
+    double m_pos_max[3];
     int32_t m_abs_pos[3];
+    int32_t m_pressure_max;
+    int32_t m_pressure;
     bool m_verbose;
+
+    struct timeval m_tv = {.tv_sec = 2, .tv_usec = 0};
 
     const size_t ev_size = sizeof(struct input_event);
 };
