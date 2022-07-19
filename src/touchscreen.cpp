@@ -19,12 +19,29 @@ cTouchScreen::cTouchScreen(const char *path, bool verbose) : m_verbose(verbose)
     m_fd = open(path, O_RDONLY);
     if(m_fd == -1)
     {
-        throw path + std::string(" is not a vaild device");
+        LOG("\t\tScanning input for \"%s\"\n", path);
+        std::string dev_path;
+        std::string dev_name = path;
+        for(int i = 0; i < 40; i++)
+        {
+            dev_path = "/dev/input/event" + std::to_string(i);
+            m_fd = open(dev_path.c_str(), O_RDWR);
+            if(m_fd > 0)
+            {
+                char test[256];
+                ioctl(m_fd, EVIOCGNAME(sizeof(test)), test);
+                if(dev_name == std::string(test))
+                    break;
+                close(m_fd);
+                m_fd=-1;
+            }
+        }
+        m_fd = open(dev_path.c_str(), O_RDWR);
     }
-    else
+    if(m_fd != -1)
     {
         if(ioctl(m_fd, EVIOCGVERSION, &m_version))
-            printf("evtest: can't get version");
+            LOG("Can't get version");
 
         ioctl(m_fd, EVIOCGNAME(sizeof(m_name)), m_name);
         LOG("\t\tName: \t%s\n", m_name);
@@ -74,6 +91,11 @@ cTouchScreen::cTouchScreen(const char *path, bool verbose) : m_verbose(verbose)
         FD_ZERO(&m_rdfs);
         FD_SET(m_fd, &m_rdfs);
         m_thread = new std::thread(&cTouchScreen::loop, this);
+    }
+    else
+    {
+        throw std::string("No Touchscreen dev found at ") + path;
+
     }
 }
 
