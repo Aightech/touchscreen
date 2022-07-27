@@ -1,14 +1,13 @@
 #include "touchscreen.hpp"
+#include "strANSIseq.hpp"
 #include <iostream>
 #include <string.h>
 
-#define LOG(...)  \
-    if(m_verbose) \
-    printf(__VA_ARGS__)
 
 cTouchScreen::cTouchScreen(const char *path, bool verbose) : m_verbose(verbose)
 {
-    LOG("\x1b[34m[TouchScreen]\x1b[0m\tInitializing.\n");
+    LOG("%s\tInitializing.\n",
+            ESC::fstr("[TouchScreen]", {ESC::BOLD, ESC::FG_YELLOW}).c_str());
     m_active = false;
     m_fd = 0;
     if((getuid()) != 0)
@@ -33,7 +32,7 @@ cTouchScreen::cTouchScreen(const char *path, bool verbose) : m_verbose(verbose)
                 if(dev_name == std::string(test))
                     break;
                 close(m_fd);
-                m_fd=-1;
+                m_fd = -1;
             }
         }
         m_fd = open(dev_path.c_str(), O_RDWR);
@@ -95,7 +94,6 @@ cTouchScreen::cTouchScreen(const char *path, bool verbose) : m_verbose(verbose)
     else
     {
         throw std::string("No Touchscreen dev found at ") + path;
-
     }
 }
 
@@ -103,9 +101,13 @@ cTouchScreen::~cTouchScreen()
 {
     if(m_fd > 0)
     {
+        LOG("%s\tClosing%s",
+            ESC::fstr("[TouchScreen]", {ESC::BOLD, ESC::FG_YELLOW}).c_str(),
+            ESC::fstr("...", {ESC::BLINK_SLOW}).c_str());
         m_active = false;
         m_thread->join();
         close(m_fd);
+        LOG("\b\b\b%s\n", ESC::fstr(" OK", {ESC::BOLD, ESC::FG_GREEN}).c_str());
     }
     m_fd = 0;
 }
