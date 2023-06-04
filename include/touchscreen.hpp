@@ -7,6 +7,10 @@
 #include <unistd.h>
 #include <vector>
 
+#include "strANSIseq.hpp"
+#include <iostream>
+#include <string.h>
+
 #define EVENT_DEVICE "/dev/input/event7"
 
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -21,51 +25,35 @@
 
 //to disable the touchscreen as a mouse : xinput set-prop id "Device Enabled" 0
 
-class cTouchScreen
+class cTouchScreen : public ESC::CLI
 {
     public:
-    cTouchScreen(const char *path = "/dev/input/event7", bool verbose = true);
+    cTouchScreen(const char *path = "/dev/input/event7", int verbose = -1);
     ~cTouchScreen();
 
-    static void *
-    loop(void *obj);
+    static void *loop(void *obj);
 
-    void
-    readEv();
+    void readEv();
 
-    const int32_t *
-    pos(uint32_t id = 0) const
+    const int32_t *pos(uint32_t id = 0) const
     {
         if(id < m_mt_nb_slot)
             return m_mt_pos[id];
         return nullptr;
     };
 
-    const double *
-    pos_rel(uint32_t id = 0) const
+    const double *pos_rel(uint32_t id = 0) const
     {
         if(id < m_mt_nb_slot)
             return m_mt_pos_rel[id];
         return nullptr;
     };
 
-    int32_t
-    max_mt() const
-    {
-        return m_mt_nb_slot;
-    };
+    int32_t max_mt() const { return m_mt_nb_slot; };
 
-    bool
-    is_absolute()
-    {
-        return !m_INPUT_PROP_POINTER;
-    };
+    bool is_absolute() { return !m_INPUT_PROP_POINTER; };
 
-    bool
-    has_pressure()
-    {
-        return m_has_pressure;
-    };
+    bool has_pressure() { return m_has_pressure; };
 
     bool m_active;
 
@@ -95,7 +83,6 @@ class cTouchScreen
     int32_t m_abs_pos[3];
     int32_t m_pressure_max;
     int32_t m_pressure;
-    bool m_verbose;
 
     struct timeval m_tv = {.tv_sec = 2, .tv_usec = 0};
 

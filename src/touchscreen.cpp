@@ -1,24 +1,21 @@
 #include "touchscreen.hpp"
-#include "strANSIseq.hpp"
-#include <iostream>
-#include <string.h>
 
+using namespace ESC;
 
-cTouchScreen::cTouchScreen(const char *path, bool verbose) : m_verbose(verbose)
+cTouchScreen::cTouchScreen(const char *path, int verbose)
+    :  CLI(verbose, "TouchScreen")
 {
-    LOG("%s\tInitializing.\n",
-            ESC::fstr("[TouchScreen]", {ESC::BOLD, ESC::FG_YELLOW}).c_str());
+    logln("Initializing.", true);
     m_active = false;
     m_fd = 0;
     if((getuid()) != 0)
-        LOG("\t\t\x1b[33mINFO:\x1b[0m You are not root! This may not "
-            "work...\n");
+        logln(fstr("[INFO]", {BOLD}) + "Missing root privileges.");
 
     /* Open Device */
     m_fd = open(path, O_RDONLY);
     if(m_fd == -1)
     {
-        LOG("\t\tScanning input for \"%s\"\n", path);
+        logln("Scanning input for \"" + std::string(path) + "\"");
         std::string dev_path;
         std::string dev_name = path;
         for(int i = 0; i < 40; i++)
@@ -40,19 +37,23 @@ cTouchScreen::cTouchScreen(const char *path, bool verbose) : m_verbose(verbose)
     if(m_fd != -1)
     {
         if(ioctl(m_fd, EVIOCGVERSION, &m_version))
-            LOG("Can't get version");
+            logln("Can't get version");
 
         ioctl(m_fd, EVIOCGNAME(sizeof(m_name)), m_name);
-        LOG("\t\tName: \t%s\n", m_name);
-        LOG("\t\tFile: \t%s\n", path);
+        logln("Name: " + std::string((char *)m_name));
+        logln("File: " + std::string(path));
 
         ioctl(m_fd, EVIOCGID, m_id);
-        LOG("\t\tID: \t0x%x(bus)  0x%x(vendor) 0x%x(product) "
-            "0x%x(version)\n",
-            m_id[ID_BUS], m_id[ID_VENDOR], m_id[ID_PRODUCT], m_id[ID_VERSION]);
-
-        LOG("\t\tVersion:%d.%d.%d\n", (m_version >> 16),
-            ((m_version >> 8) & 0xff), (m_version & 0xff));
+        char id[100];
+        sprintf(id,
+                "ID: \t0x%x(bus)  0x%x(vendor) 0x%x(product) "
+                "0x%x(version)\n",
+                m_id[ID_BUS], m_id[ID_VENDOR], m_id[ID_PRODUCT],
+                m_id[ID_VERSION]);
+        logln(id);
+        logln("Version:" + std::to_string(m_version >> 16) + ":" +
+              std::to_string((m_version >> 8) & 0xff) + ":" +
+              std::to_string(m_version & 0xff));
 
         memset(m_bit, 0, sizeof(m_bit));
         ioctl(m_fd, EVIOCGBIT(0, EV_MAX), m_bit[0]);
@@ -93,7 +94,7 @@ cTouchScreen::cTouchScreen(const char *path, bool verbose) : m_verbose(verbose)
     }
     else
     {
-        throw std::string("No Touchscreen dev found at ") + path;
+        throw log_error(std::string("No Touchscreen dev found at ") + path);
     }
 }
 
@@ -101,13 +102,11 @@ cTouchScreen::~cTouchScreen()
 {
     if(m_fd > 0)
     {
-        LOG("%s\tClosing%s",
-            ESC::fstr("[TouchScreen]", {ESC::BOLD, ESC::FG_YELLOW}).c_str(),
-            ESC::fstr("...", {ESC::BLINK_SLOW}).c_str());
+        log("Closing" + fstr("...", {BLINK_SLOW}));
         m_active = false;
         m_thread->join();
         close(m_fd);
-        LOG("\b\b\b%s\n", ESC::fstr(" OK", {ESC::BOLD, ESC::FG_GREEN}).c_str());
+        logln("\b\b\b"+ fstr(" OK", {BOLD,FG_GREEN}));
     }
     m_fd = 0;
 }

@@ -5,7 +5,7 @@ AlignAfterOpenBracket: Align
 AlignEscapedNewlines: Left
 AllowShortBlocksOnASingleLine: 'true'
 AllowShortLoopsOnASingleLine: 'true'
-AlwaysBreakAfterReturnType: All
+#AlwaysBreakAfterReturnType: All
 AlwaysBreakTemplateDeclarations: 'true'
 BinPackParameters: 'false'
 
