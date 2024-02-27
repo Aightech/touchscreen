@@ -28,8 +28,10 @@
 class cTouchScreen : public ESC::CLI
 {
     public:
-    cTouchScreen(const char *path = "/dev/input/event7", int verbose = -1);
+    cTouchScreen(int verbose = -1);
     ~cTouchScreen();
+
+    void connect(const char *path = "/dev/input/event7");
 
     static void *loop(void *obj);
 
@@ -55,9 +57,10 @@ class cTouchScreen : public ESC::CLI
 
     bool has_pressure() { return m_has_pressure; };
 
-    bool m_active;
+    bool is_active() { return m_active; };
 
     private:
+    bool m_active;
     std::thread *m_thread;
     int m_fd;
     fd_set m_rdfs;

@@ -2,7 +2,7 @@
 
 using namespace ESC;
 
-cTouchScreen::cTouchScreen(const char *path, int verbose)
+cTouchScreen::cTouchScreen(int verbose)
     :  CLI(verbose, "TouchScreen")
 {
     logln("Initializing.", true);
@@ -10,8 +10,23 @@ cTouchScreen::cTouchScreen(const char *path, int verbose)
     m_fd = 0;
     if((getuid()) != 0)
         logln(fstr("[INFO]", {BOLD}) + "Missing root privileges.");
+}
 
-    /* Open Device */
+cTouchScreen::~cTouchScreen()
+{
+    if(m_fd > 0)
+    {
+        log("Closing" + fstr("...", {BLINK_SLOW}));
+        m_active = false;
+        m_thread->join();
+        close(m_fd);
+        logln("\b\b\b"+ fstr(" OK", {BOLD,FG_GREEN}));
+    }
+    m_fd = 0;
+}
+
+void cTouchScreen::connect(const char *path)
+{
     m_fd = open(path, O_RDONLY);
     if(m_fd == -1)
     {
@@ -96,19 +111,6 @@ cTouchScreen::cTouchScreen(const char *path, int verbose)
     {
         throw log_error(std::string("No Touchscreen dev found at ") + path);
     }
-}
-
-cTouchScreen::~cTouchScreen()
-{
-    if(m_fd > 0)
-    {
-        log("Closing" + fstr("...", {BLINK_SLOW}));
-        m_active = false;
-        m_thread->join();
-        close(m_fd);
-        logln("\b\b\b"+ fstr(" OK", {BOLD,FG_GREEN}));
-    }
-    m_fd = 0;
 }
 
 void *
