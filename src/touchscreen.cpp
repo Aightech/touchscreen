@@ -2,8 +2,7 @@
 
 using namespace ESC;
 
-cTouchScreen::cTouchScreen(int verbose)
-    :  CLI(verbose, "TouchScreen")
+cTouchScreen::cTouchScreen(int verbose) : CLI(verbose, "TouchScreen")
 {
     logln("Initializing.", true);
     m_active = false;
@@ -20,7 +19,7 @@ cTouchScreen::~cTouchScreen()
         m_active = false;
         m_thread->join();
         close(m_fd);
-        logln("\b\b\b"+ fstr(" OK", {BOLD,FG_GREEN}));
+        logln("\b\b\b" + fstr(" OK", {BOLD, FG_GREEN}));
     }
     m_fd = 0;
 }
@@ -30,17 +29,19 @@ void cTouchScreen::connect(const char *path)
     m_fd = open(path, O_RDONLY);
     if(m_fd == -1)
     {
-        logln("Scanning input for \"" + std::string(path) + "\"");
+        logln("Scanning input for \"" + std::string(path) + "\"", true);
         std::string dev_path;
         std::string dev_name = path;
         for(int i = 0; i < 40; i++)
         {
             dev_path = "/dev/input/event" + std::to_string(i);
             m_fd = open(dev_path.c_str(), O_RDWR);
+            log("Checking " + dev_path, true);
             if(m_fd > 0)
             {
                 char test[256];
                 ioctl(m_fd, EVIOCGNAME(sizeof(test)), test);
+                log(": " + std::string(test) + "\n", false);
                 if(dev_name == std::string(test))
                     break;
                 close(m_fd);
@@ -55,14 +56,15 @@ void cTouchScreen::connect(const char *path)
             logln("Can't get version");
 
         ioctl(m_fd, EVIOCGNAME(sizeof(m_name)), m_name);
+        logln(ESC::fstr("Touchscreen found:\t", {BOLD, FG_GREEN}), true);
         logln("Name: " + std::string((char *)m_name));
         logln("File: " + std::string(path));
 
         ioctl(m_fd, EVIOCGID, m_id);
         char id[100];
         sprintf(id,
-                "ID: \t0x%x(bus)  0x%x(vendor) 0x%x(product) "
-                "0x%x(version)\n",
+                "ID: 0x%x(bus)  0x%x(vendor) 0x%x(product) "
+                "0x%x(version)",
                 m_id[ID_BUS], m_id[ID_VENDOR], m_id[ID_PRODUCT],
                 m_id[ID_VERSION]);
         logln(id);
@@ -113,16 +115,14 @@ void cTouchScreen::connect(const char *path)
     }
 }
 
-void *
-cTouchScreen::loop(void *obj)
+void *cTouchScreen::loop(void *obj)
 {
     while(reinterpret_cast<cTouchScreen *>(obj)->m_active)
         reinterpret_cast<cTouchScreen *>(obj)->readEv();
     return nullptr;
 }
 
-void
-cTouchScreen::readEv()
+void cTouchScreen::readEv()
 {
     FD_SET(m_fd, &m_rdfs);                        //add fd to the set
     select(m_fd + 1, &m_rdfs, NULL, NULL, &m_tv); //watch if fd is readable
