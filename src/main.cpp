@@ -15,7 +15,7 @@ main(int argc, char *argv[])
     {
         for(int i = 0; i < nb_mt; i++)
             std::cout << "(" << ts.pos(i)[0] << " " << ts.pos(i)[1] << " "
-                      << ts.pos(i)[2] << ") ";
+                      << ts.pos(i)[2] << ") (" << ts.pos_rel(i)[0] << " " << ts.pos_rel(i)[1] << ") ";
         std::cout << std::flush << clear_string;
     }
     return 0;

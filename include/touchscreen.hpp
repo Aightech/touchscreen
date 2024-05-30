@@ -84,7 +84,7 @@ class cTouchScreen : public ESC::CLI
     double *m_mt_pressure_rel = nullptr;
     double m_pos_max[3];
     int32_t m_abs_pos[3];
-    int32_t m_pressure_max;
+    int32_t m_pressure_max=1;
     int32_t m_pressure;
 
     struct timeval m_tv = {.tv_sec = 2, .tv_usec = 0};
