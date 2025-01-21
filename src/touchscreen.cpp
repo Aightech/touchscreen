@@ -124,6 +124,7 @@ void *cTouchScreen::loop(void *obj)
 
 void cTouchScreen::readEv()
 {
+    FD_ZERO(&m_rdfs);                             //clear the set
     FD_SET(m_fd, &m_rdfs);                        //add fd to the set
     select(m_fd + 1, &m_rdfs, NULL, NULL, &m_tv); //watch if fd is readable
     if(FD_ISSET(m_fd, &m_rdfs)) //fd still in set if readable before timeout
